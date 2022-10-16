@@ -8,6 +8,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "../Plugins/Online/OnlineSubsystem/Source/Public/OnlineSubsystem.h"
+
 
 //////////////////////////////////////////////////////////////////////////
 // AMultiplayerShootGameCharacter
@@ -45,6 +47,24 @@ AMultiplayerShootGameCharacter::AMultiplayerShootGameCharacter()
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
+	
+	//SubSystem
+	IOnlineSubsystem* OnlineSubsystem = IOnlineSubsystem::Get();
+	if (OnlineSubsystem)
+	{
+		OnlineSessionPtr = OnlineSubsystem->GetSessionInterface();
+		
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				15.0f,
+				FColor::White,
+				FString::Printf(TEXT("Found System: %s"), *OnlineSubsystem->GetSubsystemName().ToString())
+			);
+		}
+		OnlineSubsystem->GetSubsystemName();
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
