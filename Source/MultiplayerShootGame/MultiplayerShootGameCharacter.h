@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+ï»¿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -8,28 +8,28 @@
 
 #include "MultiplayerShootGameCharacter.generated.h"
 
-UCLASS(config=Game)
+UCLASS(config = Game)
 class AMultiplayerShootGameCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
-	/** Camera boom positioning the camera behind the character */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class USpringArmComponent* CameraBoom;
+		/** Camera boom positioning the camera behind the character */
+		UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+		class USpringArmComponent* CameraBoom;
 
 	/** Follow camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class UCameraComponent* FollowCamera;
+		class UCameraComponent* FollowCamera;
 public:
 	AMultiplayerShootGameCharacter();
 
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
-	float BaseTurnRate;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
+		float BaseTurnRate;
 
 	/** Base look up/down rate, in deg/sec. Other scaling may affect final rate. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
-	float BaseLookUpRate;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
+		float BaseLookUpRate;
 
 protected:
 
@@ -39,14 +39,14 @@ protected:
 
 	void MoveRight(float Value);
 
-	/** 
-	 * Called via input to turn at a given rate. 
+	/**
+	 * Called via input to turn at a given rate.
 	 * @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
 	 */
 	void TurnAtRate(float Rate);
 
 	/**
-	 * Called via input to turn look up/down at a given rate. 
+	 * Called via input to turn look up/down at a given rate.
 	 * @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
 	 */
 	void LookUpAtRate(float Rate);
@@ -69,20 +69,20 @@ public:
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
 public:
-	
+
 	//class TSharedPtr<IOnlineSession, ESPMode::ThreadSafe> OnlineSessionPtr;
 	IOnlineSessionPtr OnlineSessionPtr;
 
 protected:
-	//´´½¨ÓÎÏ·»á»°
-	UFUNCTION(BlueprintCallable,Category="Session")
-	void CreateGameSession();
+	//åˆ›å»ºæ¸¸æˆä¼šè¯
+	UFUNCTION(BlueprintCallable, Category = "Session")
+		void CreateGameSession();
 
-	//Steam ·şÎñ´´½¨»á»°´¥·¢Î¯ÍĞ
+	//Steam æœåŠ¡åˆ›å»ºä¼šè¯è§¦å‘å§”æ‰˜
 	FOnCreateSessionCompleteDelegate OnCreateSessionCompleteDelegate;
 
-	//´´½¨»á»°»Øµ÷º¯Êı
+	//åˆ›å»ºä¼šè¯å›è°ƒå‡½æ•°åœ£è¯èŠ‚å¥¥å…‹å…°
 	UFUNCTION()
-	void OnCreateSessionComplete(FName SessionName, bool isCreated);
+		void OnCreateSessionComplete(FName SessionName, bool isCreated);
 };
 
