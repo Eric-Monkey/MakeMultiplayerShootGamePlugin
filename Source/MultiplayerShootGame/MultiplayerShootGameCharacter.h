@@ -70,6 +70,19 @@ public:
 
 public:
 	
+	//class TSharedPtr<IOnlineSession, ESPMode::ThreadSafe> OnlineSessionPtr;
 	IOnlineSessionPtr OnlineSessionPtr;
+
+protected:
+	//创建游戏会话
+	UFUNCTION(BlueprintCallable,Category="Session")
+	void CreateGameSession();
+
+	//Steam 服务创建会话触发委托
+	FOnCreateSessionCompleteDelegate OnCreateSessionCompleteDelegate;
+
+	//创建会话回调函数
+	UFUNCTION()
+	void OnCreateSessionComplete(FName SessionName, bool isCreated);
 };
 

@@ -9,12 +9,15 @@
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "../Plugins/Online/OnlineSubsystem/Source/Public/OnlineSubsystem.h"
+#include "../Plugins/Online/OnlineSubsystem/Source/Public/OnlineSessionSettings.h"
+#include "Templates/SharedPointer.h"
 
 
 //////////////////////////////////////////////////////////////////////////
 // AMultiplayerShootGameCharacter
 
-AMultiplayerShootGameCharacter::AMultiplayerShootGameCharacter()
+AMultiplayerShootGameCharacter::AMultiplayerShootGameCharacter():
+	OnCreateSessionCompleteDelegate(FOnCreateSessionCompleteDelegate::CreateUObject(this, &AMultiplayerShootGameCharacter::OnCreateSessionComplete))
 {
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
@@ -53,7 +56,7 @@ AMultiplayerShootGameCharacter::AMultiplayerShootGameCharacter()
 	if (OnlineSubsystem)
 	{
 		OnlineSessionPtr = OnlineSubsystem->GetSessionInterface();
-		
+	
 		if (GEngine)
 		{
 			GEngine->AddOnScreenDebugMessage(
@@ -63,7 +66,6 @@ AMultiplayerShootGameCharacter::AMultiplayerShootGameCharacter()
 				FString::Printf(TEXT("Found System: %s"), *OnlineSubsystem->GetSubsystemName().ToString())
 			);
 		}
-		OnlineSubsystem->GetSubsystemName();
 	}
 }
 
@@ -158,3 +160,61 @@ void AMultiplayerShootGameCharacter::MoveRight(float Value)
 		AddMovementInput(Direction, Value);
 	}
 }
+
+void AMultiplayerShootGameCharacter::CreateGameSession()
+{
+	if (!OnlineSessionPtr.IsValid()) {
+		return;
+	}
+
+	FNamedOnlineSession*  ExistingSession =  OnlineSessionPtr->GetNamedSession(NAME_GameSession);
+	
+	//会话存在销毁
+	if (ExistingSession) {
+		OnlineSessionPtr->DestroySession(NAME_GameSession);
+	}
+	
+	////添加委托到为委托列表
+	OnlineSessionPtr->AddOnCreateSessionCompleteDelegate_Handle(OnCreateSessionCompleteDelegate);
+
+
+	//设置创建会话
+	TSharedPtr<FOnlineSessionSettings> OnlineSessionSettings = MakeShareable(new FOnlineSessionSettings());
+	OnlineSessionSettings->bIsLANMatch = false;		//局域网联机关闭
+	OnlineSessionSettings->NumPublicConnections =4;	//	Connect number
+	OnlineSessionSettings->bAllowJoinInProgress = true; //Session Runtime Can join?
+	OnlineSessionSettings->bAllowJoinViaPresence = true;	//region
+	OnlineSessionSettings->bShouldAdvertise = true; //service board
+	OnlineSessionSettings->bUsesPresence = true; // support for find
+		 
+
+	//会话不存在，创建新会话
+	const ULocalPlayer*  LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
+	OnlineSessionPtr->CreateSession(*LocalPlayer->GetPreferredUniqueNetId(), NAME_GameSession, *OnlineSessionSettings);
+}
+
+void AMultiplayerShootGameCharacter::OnCreateSessionComplete(FName SessionName, bool isCreated)
+{
+	if (isCreated) {
+		if (GEngine) {
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				15.0f,
+				FColor::Blue,
+				FString::Printf(TEXT("Created sesssion Name: %s"), *SessionName.ToString())
+			);
+		}
+	}
+	else
+	{
+		if (GEngine) {
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				15.0f,
+				FColor::Red,
+				FString(TEXT("Failed to create session !"))
+			);
+		}
+	}
+}
+
