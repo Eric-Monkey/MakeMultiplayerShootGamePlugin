@@ -18,7 +18,8 @@
 
 AMultiplayerShootGameCharacter::AMultiplayerShootGameCharacter() :
 	OnCreateSessionCompleteDelegate(FOnCreateSessionCompleteDelegate::CreateUObject(this, &AMultiplayerShootGameCharacter::OnCreateSessionComplete)),
-	OnFindSessionsCompleteDelegate(FOnFindSessionsCompleteDelegate::CreateUObject(this, &AMultiplayerShootGameCharacter::OnFindSessionsComplete))
+	OnFindSessionsCompleteDelegate(FOnFindSessionsCompleteDelegate::CreateUObject(this, &AMultiplayerShootGameCharacter::OnFindSessionsComplete)),
+	OnJoinSessionCompleteDelegate(FOnJoinSessionCompleteDelegate::CreateUObject(this, &AMultiplayerShootGameCharacter::OnJoinSessionComplete))
 {
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
@@ -189,6 +190,9 @@ void AMultiplayerShootGameCharacter::CreateGameSession()
 	OnlineSessionSettings->bUsesPresence = true; // support for find
 	//OnlineSessionSettings.bUseLobbiesIfAvailable = true ; 
 
+	//设置匹配参数
+	OnlineSessionSettings->Set(FName("MatchType"), FString("free for all"), EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
+
 	//会话不存在，创建新会话
 	const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
 	OnlineSessionPtr->CreateSession(*LocalPlayer->GetPreferredUniqueNetId(), NAME_GameSession, *OnlineSessionSettings);
@@ -224,6 +228,12 @@ void AMultiplayerShootGameCharacter::OnCreateSessionComplete(FName SessionName, 
 				FString::Printf(TEXT("Created sesssion Name: %s"), *SessionName.ToString())
 			);
 		}
+
+		//创建大厅
+		UWorld* world = GetWorld();
+		if (world) {
+			world->ServerTravel(FString("/Game/Map/Lobby?listen"));
+		}
 	}
 	else
 	{
@@ -240,6 +250,10 @@ void AMultiplayerShootGameCharacter::OnCreateSessionComplete(FName SessionName, 
 
 void AMultiplayerShootGameCharacter::OnFindSessionsComplete(bool bWasSuccessful)
 {
+	if (!OnlineSessionPtr.IsValid()) {
+		return;
+	}
+
 	if (bWasSuccessful) {
 
 		for (FOnlineSessionSearchResult SearchResult : SessionSearch->SearchResults) {
@@ -247,12 +261,23 @@ void AMultiplayerShootGameCharacter::OnFindSessionsComplete(bool bWasSuccessful)
 			FString SessionId = SearchResult.GetSessionIdStr();
 			FString UserName = SearchResult.Session.OwningUserName;
 
+			//Debug
 			if (GEngine) {
 				GEngine->AddOnScreenDebugMessage(
 					-1,
 					15.0f,
 					FColor::White,
 					FString::Printf(TEXT("SessionId: %s, UserName:%s"), *SessionId, *UserName));
+			}
+
+			//匹配合法模式
+			FString  MatchType;
+			SearchResult.Session.SessionSettings.Get(FName("MatchType"), MatchType);
+			if (MatchType == FString("free for all"))
+			{
+				OnlineSessionPtr->AddOnJoinSessionCompleteDelegate_Handle(OnJoinSessionCompleteDelegate);
+				const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
+				OnlineSessionPtr->JoinSession(*LocalPlayer->GetPreferredUniqueNetId(), NAME_GameSession, SearchResult);
 			}
 		}
 
@@ -268,5 +293,35 @@ void AMultiplayerShootGameCharacter::OnFindSessionsComplete(bool bWasSuccessful)
 			);
 		}
 	}
+}
+
+void AMultiplayerShootGameCharacter::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type result)
+{
+	if (!OnlineSessionPtr.IsValid())
+	{
+		return;
+	}
+
+	//从 会话结果 获得 接口信息
+	FString ConnectInfo;
+	if (OnlineSessionPtr->GetResolvedConnectString(NAME_GameSession, ConnectInfo)) {
+		//Debug
+		if (GEngine) {
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				15.0f,
+				FColor::Yellow,
+				FString::Printf((TEXT("ConnectInfo: %s")), *ConnectInfo)
+			);
+		}
+
+		//加入游戏大厅
+		APlayerController* PC = GetGameInstance()->GetFirstLocalPlayerController();
+		if (PC) {
+			PC->ClientTravel(ConnectInfo, ETravelType::TRAVEL_Absolute);
+		}
+
+	}
+
 }
 

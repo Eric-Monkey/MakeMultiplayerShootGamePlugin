@@ -88,13 +88,17 @@ protected:
 	FOnCreateSessionCompleteDelegate OnCreateSessionCompleteDelegate;
 	//Steam Service 找到会话委托
 	FOnFindSessionsCompleteDelegate OnFindSessionsCompleteDelegate;
+	//Steam Service 加入会话委托
+	FOnJoinSessionCompleteDelegate OnJoinSessionCompleteDelegate;
+
 
 	//创建会话,回调函数
-	UFUNCTION()
-		void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
+	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
 
 	//查找会话回调函数
-	UFUNCTION()
-		void OnFindSessionsComplete(bool bWasSuccessful);
+	void OnFindSessionsComplete(bool bWasSuccessful);
+
+	//加入会话回调函数
+	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Value);
 };
 
