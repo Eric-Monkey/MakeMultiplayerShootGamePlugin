@@ -74,15 +74,27 @@ public:
 	IOnlineSessionPtr OnlineSessionPtr;
 
 protected:
+	TSharedPtr<FOnlineSessionSearch> SessionSearch;
+
 	//创建游戏会话
 	UFUNCTION(BlueprintCallable, Category = "Session")
 		void CreateGameSession();
 
+	//加入会话
+	UFUNCTION(BlueprintCallable, Category = "Session")
+		void JoinSession();
+
 	//Steam 服务创建会话触发委托
 	FOnCreateSessionCompleteDelegate OnCreateSessionCompleteDelegate;
+	//Steam Service 找到会话委托
+	FOnFindSessionsCompleteDelegate OnFindSessionsCompleteDelegate;
 
-	//创建会话回调函数圣诞节奥克兰
+	//创建会话,回调函数
 	UFUNCTION()
-		void OnCreateSessionComplete(FName SessionName, bool isCreated);
+		void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
+
+	//查找会话回调函数
+	UFUNCTION()
+		void OnFindSessionsComplete(bool bWasSuccessful);
 };
 

@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+ï»¿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "MultiplayerShootGameCharacter.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
@@ -16,8 +16,9 @@
 //////////////////////////////////////////////////////////////////////////
 // AMultiplayerShootGameCharacter
 
-AMultiplayerShootGameCharacter::AMultiplayerShootGameCharacter():
-	OnCreateSessionCompleteDelegate(FOnCreateSessionCompleteDelegate::CreateUObject(this, &AMultiplayerShootGameCharacter::OnCreateSessionComplete))
+AMultiplayerShootGameCharacter::AMultiplayerShootGameCharacter() :
+	OnCreateSessionCompleteDelegate(FOnCreateSessionCompleteDelegate::CreateUObject(this, &AMultiplayerShootGameCharacter::OnCreateSessionComplete)),
+	OnFindSessionsCompleteDelegate(FOnFindSessionsCompleteDelegate::CreateUObject(this, &AMultiplayerShootGameCharacter::OnFindSessionsComplete))
 {
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
@@ -50,13 +51,13 @@ AMultiplayerShootGameCharacter::AMultiplayerShootGameCharacter():
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
-	
+
 	//SubSystem
 	IOnlineSubsystem* OnlineSubsystem = IOnlineSubsystem::Get();
 	if (OnlineSubsystem)
 	{
 		OnlineSessionPtr = OnlineSubsystem->GetSessionInterface();
-	
+
 		if (GEngine)
 		{
 			GEngine->AddOnScreenDebugMessage(
@@ -112,12 +113,12 @@ void AMultiplayerShootGameCharacter::OnResetVR()
 
 void AMultiplayerShootGameCharacter::TouchStarted(ETouchIndex::Type FingerIndex, FVector Location)
 {
-		Jump();
+	Jump();
 }
 
 void AMultiplayerShootGameCharacter::TouchStopped(ETouchIndex::Type FingerIndex, FVector Location)
 {
-		StopJumping();
+	StopJumping();
 }
 
 void AMultiplayerShootGameCharacter::TurnAtRate(float Rate)
@@ -148,12 +149,12 @@ void AMultiplayerShootGameCharacter::MoveForward(float Value)
 
 void AMultiplayerShootGameCharacter::MoveRight(float Value)
 {
-	if ( (Controller != nullptr) && (Value != 0.0f) )
+	if ((Controller != nullptr) && (Value != 0.0f))
 	{
 		// find out which way is right
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
-	
+
 		// get right vector 
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 		// add movement in that direction
@@ -167,35 +168,54 @@ void AMultiplayerShootGameCharacter::CreateGameSession()
 		return;
 	}
 
-	FNamedOnlineSession*  ExistingSession =  OnlineSessionPtr->GetNamedSession(NAME_GameSession);
-	
-	//»á»°´æÔÚÏú»Ù
+	FNamedOnlineSession* ExistingSession = OnlineSessionPtr->GetNamedSession(NAME_GameSession);
+
+	//ä¼šè¯å­˜åœ¨é”€æ¯
 	if (ExistingSession) {
 		OnlineSessionPtr->DestroySession(NAME_GameSession);
 	}
-	
-	////Ìí¼ÓÎ¯ÍĞµ½ÎªÎ¯ÍĞÁĞ±í
+
+	////æ·»åŠ å§”æ‰˜åˆ°ä¸ºå§”æ‰˜åˆ—è¡¨
 	OnlineSessionPtr->AddOnCreateSessionCompleteDelegate_Handle(OnCreateSessionCompleteDelegate);
 
 
-	//ÉèÖÃ´´½¨»á»°
+	//è®¾ç½®åˆ›å»ºä¼šè¯
 	TSharedPtr<FOnlineSessionSettings> OnlineSessionSettings = MakeShareable(new FOnlineSessionSettings());
-	OnlineSessionSettings->bIsLANMatch = false;		//¾ÖÓòÍøÁª»ú¹Ø±Õ
-	OnlineSessionSettings->NumPublicConnections =4;	//	Connect number
+	OnlineSessionSettings->bIsLANMatch = false;		//å±€åŸŸç½‘è”æœºå…³é—­
+	OnlineSessionSettings->NumPublicConnections = 4;	//	Connect number
 	OnlineSessionSettings->bAllowJoinInProgress = true; //Session Runtime Can join?
 	OnlineSessionSettings->bAllowJoinViaPresence = true;	//region
 	OnlineSessionSettings->bShouldAdvertise = true; //service board
 	OnlineSessionSettings->bUsesPresence = true; // support for find
-		 
+	//OnlineSessionSettings.bUseLobbiesIfAvailable = true ; 
 
-	//»á»°²»´æÔÚ£¬´´½¨ĞÂ»á»°
-	const ULocalPlayer*  LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
+	//ä¼šè¯ä¸å­˜åœ¨ï¼Œåˆ›å»ºæ–°ä¼šè¯
+	const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
 	OnlineSessionPtr->CreateSession(*LocalPlayer->GetPreferredUniqueNetId(), NAME_GameSession, *OnlineSessionSettings);
 }
 
-void AMultiplayerShootGameCharacter::OnCreateSessionComplete(FName SessionName, bool isCreated)
+void AMultiplayerShootGameCharacter::JoinSession()
 {
-	if (isCreated) {
+	if (!OnlineSessionPtr.IsValid()) {
+		return;
+	}
+	//æŸ¥æ‰¾å§”æ‰˜åŠ å…¥å§”æ‰˜åˆ—è¡¨
+	OnlineSessionPtr->AddOnFindSessionsCompleteDelegate_Handle(OnFindSessionsCompleteDelegate);
+
+	//è®¾ç½®æŸ¥æ‰¾å‚æ•°
+	SessionSearch = MakeShareable(new FOnlineSessionSearch());
+	SessionSearch->MaxSearchResults = 10000;
+	SessionSearch->bIsLanQuery = false;
+	//å› ä¸ºbusepresent = true,æ·»åŠ è®¾ç½®
+	SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
+
+	const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
+	OnlineSessionPtr->FindSessions(*LocalPlayer->GetPreferredUniqueNetId(), SessionSearch.ToSharedRef());
+}
+
+void AMultiplayerShootGameCharacter::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
+{
+	if (bWasSuccessful) {
 		if (GEngine) {
 			GEngine->AddOnScreenDebugMessage(
 				-1,
@@ -213,6 +233,38 @@ void AMultiplayerShootGameCharacter::OnCreateSessionComplete(FName SessionName, 
 				15.0f,
 				FColor::Red,
 				FString(TEXT("Failed to create session !"))
+			);
+		}
+	}
+}
+
+void AMultiplayerShootGameCharacter::OnFindSessionsComplete(bool bWasSuccessful)
+{
+	if (bWasSuccessful) {
+
+		for (FOnlineSessionSearchResult SearchResult : SessionSearch->SearchResults) {
+
+			FString SessionId = SearchResult.GetSessionIdStr();
+			FString UserName = SearchResult.Session.OwningUserName;
+
+			if (GEngine) {
+				GEngine->AddOnScreenDebugMessage(
+					-1,
+					15.0f,
+					FColor::White,
+					FString::Printf(TEXT("SessionId: %s, UserName:%s"), *SessionId, *UserName));
+			}
+		}
+
+	}
+	else
+	{
+		if (GEngine) {
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				15.0f,
+				FColor::Red,
+				FString(TEXT("Failed to find session !"))
 			);
 		}
 	}
