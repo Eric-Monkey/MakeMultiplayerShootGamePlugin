@@ -1,2 +1,0 @@
-# MultiplayerShootGame
-Senior project practice
