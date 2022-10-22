@@ -5,6 +5,9 @@
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "OnlineSubsystem.h"
+#include "../Plugins/Online/OnlineSubsystem/Source/Public/Interfaces/OnlineSessionInterface.h"
+
+//D : \UE\UE_4.26\
 
 #include "MultiplayerSessionsSubsystem.generated.h"
 
