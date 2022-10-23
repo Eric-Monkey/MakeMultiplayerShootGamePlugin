@@ -30,6 +30,10 @@ bool UMenu::Initialize()
 	//Bind Callback function
 	if (MultiplayerSessionsSubsystem) {
 		MultiplayerSessionsSubsystem->OnCreateSession.AddDynamic(this, &ThisClass::OnCreateSession);
+		MultiplayerSessionsSubsystem->OnFindSession.AddUObject(this, &ThisClass::OnFindSession);
+		MultiplayerSessionsSubsystem->OnJoinSession.AddUObject(this, &ThisClass::OnJoinSession);
+		MultiplayerSessionsSubsystem->OnDestorySesssion.AddDynamic(this, &ThisClass::OnDestroySession);
+		MultiplayerSessionsSubsystem->OnStartSession.AddDynamic(this, &ThisClass::OnStartSession);
 	}
 
 	return true;
@@ -71,6 +75,14 @@ void UMenu::HostButtonClicked()
 	}
 }
 
+
+void UMenu::JoinButtonClicked()
+{
+	if (MultiplayerSessionsSubsystem) {
+		MultiplayerSessionsSubsystem->FindSession(10000);
+	}
+}
+
 void UMenu::OnCreateSession(bool bWasSuccessed)
 {
 	if (bWasSuccessed) {
@@ -105,10 +117,58 @@ void UMenu::OnCreateSession(bool bWasSuccessed)
 }
 
 
-void UMenu::JoinButtonClicked()
+void UMenu::OnFindSession(const TArray<FOnlineSessionSearchResult>& SessionResults, bool bSuccessfulbool)
+{
+	if (!MultiplayerSessionsSubsystem) {
+		return;
+	}
+
+	if (bSuccessfulbool) {
+		for (FOnlineSessionSearchResult SessionResult : SessionResults) {
+			//参数匹配
+			FString SettingVal;
+			SessionResult.Session.SessionSettings.Get(FName("MathType"), SettingVal);
+
+			if (SettingVal == MathType) {
+				MultiplayerSessionsSubsystem->JoinSession(SessionResult);
+				return;
+			}
+		}
+	}
+
+
+}
+
+void UMenu::OnJoinSession(FName SessionName, EOnJoinSessionCompleteResult::Type JoinResult)
+{
+	IOnlineSubsystem* OnlineSubsystem = IOnlineSubsystem::Get();
+	if (OnlineSubsystem) {
+
+		IOnlineSessionPtr SessionInterface = OnlineSubsystem->GetSessionInterface();
+
+		if (SessionInterface.IsValid()) {
+			FString ConnectInfo;
+			SessionInterface->GetResolvedConnectString(SessionName, ConnectInfo);
+
+			//加入游戏大厅
+			APlayerController* PC = GetGameInstance()->GetFirstLocalPlayerController();
+			if (PC) {
+				PC->ClientTravel(ConnectInfo, ETravelType::TRAVEL_Absolute);
+			}
+		}
+	}
+}
+
+void UMenu::OnDestroySession(bool bSuccessful)
 {
 
 }
+
+void UMenu::OnStartSession(bool bSuccessful)
+{
+
+}
+
 
 void UMenu::MenuTearDown()
 {

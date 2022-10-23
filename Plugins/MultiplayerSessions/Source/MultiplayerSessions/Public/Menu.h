@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "OnlineSubsystem.h"
-
+#include "../Plugins/Online/OnlineSubsystem/Source/Public/Interfaces/OnlineSessionInterface.h"
 
 #include "Menu.generated.h"
 
@@ -47,6 +47,13 @@ protected:
 	//
 	UFUNCTION()
 		void OnCreateSession(bool bWasSuccessed);
+	void OnFindSession(const TArray<FOnlineSessionSearchResult>& SessionResults, bool bSuccessfulbool);
+	void OnJoinSession(FName SessionName, EOnJoinSessionCompleteResult::Type JoinResult);
+	UFUNCTION()
+		void OnDestroySession(bool bSuccessful);
+	UFUNCTION()
+		void OnStartSession(bool bSuccessful);
+
 
 public:
 	virtual bool Initialize() override;

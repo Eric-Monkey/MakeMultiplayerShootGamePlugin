@@ -66,11 +66,43 @@ void UMultiplayerSessionsSubsystem::CreateSession(int32 NumPublicConections, FSt
 
 void UMultiplayerSessionsSubsystem::FindSession(int32 MaxSearchResults)
 {
+	if (!SessionInterface.IsValid()) {
+		return;
+	}
+	//添加委托列表
+	SessionInterface->AddOnFindSessionsCompleteDelegate_Handle(OnFindSessionsCompleteDelegate);
+
+	LastSessionSearch->bIsLanQuery = true;
+	LastSessionSearch->MaxSearchResults = MaxSearchResults;
+	LastSessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
+
+
+	ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
+	if (!SessionInterface->FindSessions(*LocalPlayer->GetPreferredUniqueNetId(), LastSessionSearch.ToSharedRef())) {
+		//委托列表移除
+		SessionInterface->ClearOnFindSessionsCompleteDelegate_Handle(OnFindSessionsCompleteDelegateHandle);
+		//广播
+		OnFindSession.Broadcast(TArray<FOnlineSessionSearchResult>(), false);
+		return;
+	}
 
 }
 
 void UMultiplayerSessionsSubsystem::JoinSession(const FOnlineSessionSearchResult& SessionResult)
 {
+	if (!SessionInterface.IsValid()) {
+		OnJoinSession.Broadcast(FName(), EOnJoinSessionCompleteResult::UnknownError);
+		return;
+	}
+	//返回委托句柄
+	OnJoinSessionCompleteDelegateHandle = SessionInterface->AddOnJoinSessionCompleteDelegate_Handle(OnJoinSessionCompleteDelegate);
+
+	const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
+
+	if (!SessionInterface->JoinSession(*LocalPlayer->GetPreferredUniqueNetId(), NAME_GameSession, SessionResult)) {
+		SessionInterface->ClearOnJoinSessionCompleteDelegate_Handle(OnJoinSessionCompleteDelegateHandle);
+		OnJoinSession.Broadcast(FName(), EOnJoinSessionCompleteResult::UnknownError);
+	}
 
 }
 
@@ -95,12 +127,27 @@ void UMultiplayerSessionsSubsystem::OnCreateSessionComplete(FName SessionName, b
 
 void UMultiplayerSessionsSubsystem::OnFindSessionsComplete(bool bWasSuccessful)
 {
+	if (SessionInterface) {
+		SessionInterface->ClearOnFindSessionsCompleteDelegate_Handle(OnFindSessionsCompleteDelegateHandle);
+	}
+
+	TArray<FOnlineSessionSearchResult> SessionSearchResults = LastSessionSearch->SearchResults;
+	if (SessionSearchResults.Num() <= 0) {
+		//广播
+		OnFindSession.Broadcast(TArray<FOnlineSessionSearchResult>(), false);
+		return;
+	}
+
+	OnFindSession.Broadcast(SessionSearchResults, bWasSuccessful);
 
 }
 
 void UMultiplayerSessionsSubsystem::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
 {
-
+	if (SessionInterface) {
+		SessionInterface->ClearOnJoinSessionCompleteDelegate_Handle(OnJoinSessionCompleteDelegateHandle);
+	}
+	OnJoinSession.Broadcast(SessionName, Result);
 }
 
 void UMultiplayerSessionsSubsystem::OnDestroySessionComplete(FName SessionName, bool isWasSuccessful)
