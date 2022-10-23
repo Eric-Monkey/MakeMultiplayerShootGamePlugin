@@ -27,6 +27,11 @@ bool UMenu::Initialize()
 		MultiplayerSessionsSubsystem = GameInstance->GetSubsystem<UMultiplayerSessionsSubsystem>();
 	}
 
+	//Bind Callback function
+	if (MultiplayerSessionsSubsystem) {
+		MultiplayerSessionsSubsystem->OnCreateSession.AddDynamic(this, &ThisClass::OnCreateSession);
+	}
+
 	return true;
 }
 
@@ -63,13 +68,42 @@ void UMenu::HostButtonClicked()
 {
 	if (MultiplayerSessionsSubsystem) {
 		MultiplayerSessionsSubsystem->CreateSession(NumPublicConections, MathType);
+	}
+}
 
+void UMenu::OnCreateSession(bool bWasSuccessed)
+{
+	if (bWasSuccessed) {
 		UWorld* World = GetWorld();
 		if (World) {
 			World->ServerTravel(MapPath);
 		}
+
+		//debug
+		if (GEngine) {
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				2.0f,
+				FColor::Yellow,
+				FString::Printf(TEXT("Successed create session :NumPublicConections %d,MathType %s"), NumPublicConections, *MathType)
+			);
+		}
 	}
+	else
+	{
+		//debug
+		if (GEngine) {
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				2.0f,
+				FColor::Red,
+				FString(TEXT("Fail create session :NumPublicConections %d,MathType %s"))
+			);
+		}
+	}
+
 }
+
 
 void UMenu::JoinButtonClicked()
 {
@@ -90,4 +124,6 @@ void UMenu::MenuTearDown()
 		}
 	}
 }
+
+
 

@@ -42,6 +42,11 @@ protected:
 
 	void MenuTearDown();
 
+	//
+	//MultiplayerSessionsSubsystem Delegate Callback Function
+	//
+	UFUNCTION()
+		void OnCreateSession(bool bWasSuccessed);
 
 public:
 	virtual bool Initialize() override;

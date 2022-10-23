@@ -49,17 +49,18 @@ void UMultiplayerSessionsSubsystem::CreateSession(int32 NumPublicConections, FSt
 	if (!SessionInterface->CreateSession(*LocalPlayer->GetPreferredUniqueNetId(), NAME_GameSession, *LastSessionSettings)) {
 		//从委托列表移除
 		SessionInterface->ClearOnCreateSessionCompleteDelegate_Handle(OnCreateSessionCompleteDelegateHandle);
+		OnCreateSession.Broadcast(false);
 		return;
 	}
 	//debug
-	if (GEngine) {
+	/*if (GEngine) {
 		GEngine->AddOnScreenDebugMessage(
 			-1,
 			2.0f,
 			FColor::Yellow,
 			FString::Printf(TEXT("HostButtonClicked to call create session :NumPublicConections %d,MathType %s"), NumPublicConections, *MathType)
 		);
-	}
+	}*/
 
 }
 
@@ -85,7 +86,11 @@ void UMultiplayerSessionsSubsystem::StartSession()
 
 void UMultiplayerSessionsSubsystem::OnCreateSessionComplete(FName SessionName, bool isWasSuccessful)
 {
+	if (SessionInterface) {
+		SessionInterface->ClearOnCreateSessionCompleteDelegate_Handle(OnCreateSessionCompleteDelegateHandle);
+	}
 
+	OnCreateSession.Broadcast(isWasSuccessful);
 }
 
 void UMultiplayerSessionsSubsystem::OnFindSessionsComplete(bool bWasSuccessful)

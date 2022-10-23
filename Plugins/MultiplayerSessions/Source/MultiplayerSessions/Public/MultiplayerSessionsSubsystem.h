@@ -12,6 +12,8 @@
 
 #include "MultiplayerSessionsSubsystem.generated.h"
 
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMultiplayerCreateSessionComplete, bool, bWasSuccessced);
 /**
  *
  */
@@ -33,6 +35,10 @@ public:
 	void DestroySession();
 	void StartSession();
 
+	//
+	// Custom Delegate
+	//
+	FMultiplayerCreateSessionComplete OnCreateSession;
 
 protected:
 	//
@@ -43,6 +49,9 @@ protected:
 	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 	void OnDestroySessionComplete(FName SessionName, bool isWasSuccessful);
 	void OnStartSessionComplete(FName SessionName, bool isWasSuccessful);
+
+
+
 
 	TSharedPtr<FOnlineSessionSettings> LastSessionSettings;
 
