@@ -14,7 +14,7 @@
 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMultiplayerCreateSessionComplete, bool, bWasSuccessced);
-DECLARE_MULTICAST_DELEGATE_TwoParams(FMultiplayerFindSessionComplete, const TArray<FOnlineSessionSearchResult>& SessionResult, bool bSuccessful);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FMultiplayerFindSessionComplete, const TArray<FOnlineSessionSearchResult>& SessionResults, bool bSuccessful);
 DECLARE_MULTICAST_DELEGATE_TwoParams(FMultiplayerJoinSessionComplete, FName SessionName, EOnJoinSessionCompleteResult::Type JoinResult);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMultiplayerDestorySessionComplete, bool, bSuccessful);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMultiplayerStartSessionComplete, bool, bSuccessful);
@@ -63,9 +63,10 @@ protected:
 
 private:
 	IOnlineSessionPtr SessionInterface;
-	TSharedPtr<FOnlineSessionSearch> LastSessionSearch;
 
-	TSharedPtr<FOnlineSessionSettings> LastSessionSettings;
+	TSharedPtr<FOnlineSessionSearch> LastSessionSearch = MakeShareable(new FOnlineSessionSearch());
+
+	TSharedPtr<FOnlineSessionSettings> LastSessionSettings = MakeShareable(new FOnlineSessionSettings());
 	//
 	// will Add Session Interface Delegate List
 	// 

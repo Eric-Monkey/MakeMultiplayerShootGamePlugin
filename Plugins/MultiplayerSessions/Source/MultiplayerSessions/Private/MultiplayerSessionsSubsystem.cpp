@@ -36,7 +36,7 @@ void UMultiplayerSessionsSubsystem::CreateSession(int32 NumPublicConections, FSt
 
 	//SessionSetting
 	LastSessionSettings = MakeShareable(new FOnlineSessionSettings());
-	LastSessionSettings->bIsLANMatch = IOnlineSubsystem::Get()->GetSubsystemName() == "Null" ? true : false;
+	LastSessionSettings->bIsLANMatch = /*IOnlineSubsystem::Get()->GetSubsystemName() == "Null" ? true : */false;
 	LastSessionSettings->NumPublicConnections = NumPublicConections;
 	LastSessionSettings->bAllowJoinInProgress = true;
 	LastSessionSettings->bAllowJoinViaPresence = true;
@@ -72,7 +72,7 @@ void UMultiplayerSessionsSubsystem::FindSession(int32 MaxSearchResults)
 	//添加委托列表
 	SessionInterface->AddOnFindSessionsCompleteDelegate_Handle(OnFindSessionsCompleteDelegate);
 
-	LastSessionSearch->bIsLanQuery = true;
+	LastSessionSearch->bIsLanQuery = /*IOnlineSubsystem::Get()->GetSubsystemName() == "Null" ? true : */false;
 	LastSessionSearch->MaxSearchResults = MaxSearchResults;
 	LastSessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
 
@@ -90,6 +90,16 @@ void UMultiplayerSessionsSubsystem::FindSession(int32 MaxSearchResults)
 
 void UMultiplayerSessionsSubsystem::JoinSession(const FOnlineSessionSearchResult& SessionResult)
 {
+	//debug
+	if (GEngine) {
+		GEngine->AddOnScreenDebugMessage(
+			-1,
+			15.0f,
+			FColor::Yellow,
+			FString(TEXT("Enter MultiplayerSessionSubsystem JoinSession"))
+		);
+	}
+
 	if (!SessionInterface.IsValid()) {
 		OnJoinSession.Broadcast(FName(), EOnJoinSessionCompleteResult::UnknownError);
 		return;
@@ -144,9 +154,20 @@ void UMultiplayerSessionsSubsystem::OnFindSessionsComplete(bool bWasSuccessful)
 
 void UMultiplayerSessionsSubsystem::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
 {
-	if (SessionInterface) {
+	if (SessionInterface.IsValid()) {
 		SessionInterface->ClearOnJoinSessionCompleteDelegate_Handle(OnJoinSessionCompleteDelegateHandle);
 	}
+
+	//debug
+	if (GEngine) {
+		GEngine->AddOnScreenDebugMessage(
+			-1,
+			15.0f,
+			FColor::Yellow,
+			FString(TEXT("Enter MultiplayerSessionSubsystem OnJoinSession"))
+		);
+	}
+
 	OnJoinSession.Broadcast(SessionName, Result);
 }
 

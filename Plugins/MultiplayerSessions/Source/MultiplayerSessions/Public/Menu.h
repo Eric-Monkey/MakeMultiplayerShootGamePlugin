@@ -19,11 +19,11 @@ class MULTIPLAYERSESSIONS_API UMenu : public UUserWidget
 
 public:
 	int32 NumPublicConections;
-	FString MathType;
+	FString MatchType;
 	FString MapPath;
 
 	UFUNCTION(BlueprintCallable)
-		void MenuSetup(int32 parmNumPublicConections = 4, FString parmMathType = "FreeForAll", FString parmMapPath = "/Game/Maps/Lobby");
+		void MenuSetup(int32 parmNumPublicConections = 4, FString parmMatchType = "FreeForAll", FString parmMapPath = "/Game/Maps/Lobby");
 
 protected:
 	UPROPERTY(meta = (BindWidget))
@@ -47,7 +47,7 @@ protected:
 	//
 	UFUNCTION()
 		void OnCreateSession(bool bWasSuccessed);
-	void OnFindSession(const TArray<FOnlineSessionSearchResult>& SessionResults, bool bSuccessfulbool);
+	void OnFindSession(const TArray<FOnlineSessionSearchResult>& SessionResults, bool bSuccessful);
 	void OnJoinSession(FName SessionName, EOnJoinSessionCompleteResult::Type JoinResult);
 	UFUNCTION()
 		void OnDestroySession(bool bSuccessful);

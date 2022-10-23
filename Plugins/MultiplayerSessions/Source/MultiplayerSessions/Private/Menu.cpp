@@ -46,11 +46,11 @@ void UMenu::OnLevelRemovedFromWorld(ULevel* InLevel, UWorld* InWorld)
 	Super::OnLevelRemovedFromWorld(InLevel, InWorld);
 }
 
-void UMenu::MenuSetup(int32 parmNumPublicConections, FString parmMathType, FString parnMapPath)
+void UMenu::MenuSetup(int32 parmNumPublicConections, FString parmMatchType, FString parnMapPath)
 {
 	//init Property
 	NumPublicConections = parmNumPublicConections;
-	MathType = parmMathType;
+	MatchType = parmMatchType;
 	MapPath = parnMapPath.Append("?listen");
 
 	AddToViewport();
@@ -71,7 +71,7 @@ void UMenu::MenuSetup(int32 parmNumPublicConections, FString parmMathType, FStri
 void UMenu::HostButtonClicked()
 {
 	if (MultiplayerSessionsSubsystem) {
-		MultiplayerSessionsSubsystem->CreateSession(NumPublicConections, MathType);
+		MultiplayerSessionsSubsystem->CreateSession(NumPublicConections, MatchType);
 	}
 }
 
@@ -97,7 +97,7 @@ void UMenu::OnCreateSession(bool bWasSuccessed)
 				-1,
 				2.0f,
 				FColor::Yellow,
-				FString::Printf(TEXT("Successed create session :NumPublicConections %d,MathType %s"), NumPublicConections, *MathType)
+				FString::Printf(TEXT("Successed create session :NumPublicConections %d,MatchType %s"), NumPublicConections, *MatchType)
 			);
 		}
 	}
@@ -109,7 +109,7 @@ void UMenu::OnCreateSession(bool bWasSuccessed)
 				-1,
 				2.0f,
 				FColor::Red,
-				FString(TEXT("Fail create session :NumPublicConections %d,MathType %s"))
+				FString(TEXT("Fail create session :NumPublicConections %d,MatchType %s"))
 			);
 		}
 	}
@@ -117,26 +117,49 @@ void UMenu::OnCreateSession(bool bWasSuccessed)
 }
 
 
-void UMenu::OnFindSession(const TArray<FOnlineSessionSearchResult>& SessionResults, bool bSuccessfulbool)
+void UMenu::OnFindSession(const TArray<FOnlineSessionSearchResult>& SessionResults, bool bSuccessful)
 {
 	if (!MultiplayerSessionsSubsystem) {
 		return;
 	}
 
-	if (bSuccessfulbool) {
+
+
+	if (bSuccessful) {
 		for (FOnlineSessionSearchResult SessionResult : SessionResults) {
 			//参数匹配
 			FString SettingVal;
-			SessionResult.Session.SessionSettings.Get(FName("MathType"), SettingVal);
+			SessionResult.Session.SessionSettings.Get(FName("MatchType"), SettingVal);
 
-			if (SettingVal == MathType) {
-				MultiplayerSessionsSubsystem->JoinSession(SessionResult);
-				return;
+
+			//debug
+			if (GEngine) {
+				GEngine->AddOnScreenDebugMessage(
+					-1,
+					2.0f,
+					FColor::Yellow,
+					FString::Printf(TEXT("OnFindSession: %f"), *SettingVal)
+				);
 			}
+
+			if (SettingVal == MatchType) {
+
+				//debug
+				if (GEngine) {
+					GEngine->AddOnScreenDebugMessage(
+						-1,
+						2.0f,
+						FColor::Yellow,
+						FString::Printf(TEXT("OnFindSession1: %f"), *SettingVal)
+					);
+				}
+
+				MultiplayerSessionsSubsystem->JoinSession(SessionResult);
+			}
+
+			return;
 		}
 	}
-
-
 }
 
 void UMenu::OnJoinSession(FName SessionName, EOnJoinSessionCompleteResult::Type JoinResult)
@@ -146,9 +169,25 @@ void UMenu::OnJoinSession(FName SessionName, EOnJoinSessionCompleteResult::Type 
 
 		IOnlineSessionPtr SessionInterface = OnlineSubsystem->GetSessionInterface();
 
-		if (SessionInterface.IsValid()) {
+		if (!SessionInterface.IsValid()) {
+			return;
+		}
+
+		if (EOnJoinSessionCompleteResult::Success == JoinResult) {
+
 			FString ConnectInfo;
 			SessionInterface->GetResolvedConnectString(SessionName, ConnectInfo);
+
+			//debug
+			if (GEngine) {
+				GEngine->AddOnScreenDebugMessage(
+					-1,
+					15.0f,
+					FColor::Blue,
+					FString::Printf(TEXT("JoinSession: %s"), *ConnectInfo)
+				);
+			}
+
 
 			//加入游戏大厅
 			APlayerController* PC = GetGameInstance()->GetFirstLocalPlayerController();
@@ -156,6 +195,8 @@ void UMenu::OnJoinSession(FName SessionName, EOnJoinSessionCompleteResult::Type 
 				PC->ClientTravel(ConnectInfo, ETravelType::TRAVEL_Absolute);
 			}
 		}
+
+
 	}
 }
 
