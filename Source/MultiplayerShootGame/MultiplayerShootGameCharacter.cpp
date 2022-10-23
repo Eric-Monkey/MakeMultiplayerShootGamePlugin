@@ -73,7 +73,6 @@ AMultiplayerShootGameCharacter::AMultiplayerShootGameCharacter() :
 
 //////////////////////////////////////////////////////////////////////////
 // Input
-
 void AMultiplayerShootGameCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
 	// Set up gameplay key bindings
@@ -172,7 +171,7 @@ void AMultiplayerShootGameCharacter::CreateGameSession()
 	FNamedOnlineSession* ExistingSession = OnlineSessionPtr->GetNamedSession(NAME_GameSession);
 
 	//会话存在销毁
-	if (ExistingSession) {
+	if (ExistingSession != nullptr) {
 		OnlineSessionPtr->DestroySession(NAME_GameSession);
 	}
 

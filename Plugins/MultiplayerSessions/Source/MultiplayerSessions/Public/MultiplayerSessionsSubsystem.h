@@ -6,6 +6,7 @@
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "OnlineSubsystem.h"
 #include "../Plugins/Online/OnlineSubsystem/Source/Public/Interfaces/OnlineSessionInterface.h"
+#include "OnlineSessionSettings.h"
 
 //D : \UE\UE_4.26\
 
@@ -43,6 +44,7 @@ protected:
 	void OnDestroySessionComplete(FName SessionName, bool isWasSuccessful);
 	void OnStartSessionComplete(FName SessionName, bool isWasSuccessful);
 
+	TSharedPtr<FOnlineSessionSettings> LastSessionSettings;
 
 private:
 	IOnlineSessionPtr SessionInterface;
