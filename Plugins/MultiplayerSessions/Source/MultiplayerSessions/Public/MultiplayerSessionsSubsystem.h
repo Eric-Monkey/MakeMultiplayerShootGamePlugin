@@ -33,12 +33,12 @@ public:
 	UMultiplayerSessionsSubsystem();
 
 	//
-	// handle to Sesssion Function called by Menu
+	// handle to Session Function called by Menu
 	//
-	void CreateSession(int32 NumPublicConections, FString MathType);
+	void CreateSession(int32 NumPublicConections,FString MatchType);
 	void FindSession(int32 MaxSearchResults);
 	void JoinSession(const FOnlineSessionSearchResult& SessionResult);
-	void DestroySession();
+	void DestroySession(FName SessionName);
 	void StartSession();
 
 	//
@@ -62,6 +62,12 @@ protected:
 
 
 private:
+	bool bIsDestory;
+	
+	//CreateSession Need
+	int32 NumConnections;
+	FString SessionSetVal;
+
 	IOnlineSessionPtr SessionInterface;
 
 	TSharedPtr<FOnlineSessionSearch> LastSessionSearch = MakeShareable(new FOnlineSessionSearch());

@@ -70,6 +70,7 @@ void UMenu::MenuSetup(int32 parmNumPublicConections, FString parmMatchType, FStr
 
 void UMenu::HostButtonClicked()
 {
+	HostButton->SetIsEnabled(false);
 	if (MultiplayerSessionsSubsystem) {
 		MultiplayerSessionsSubsystem->CreateSession(NumPublicConections, MatchType);
 	}
@@ -78,6 +79,7 @@ void UMenu::HostButtonClicked()
 
 void UMenu::JoinButtonClicked()
 {
+	JoinButton->SetIsEnabled(false);
 	if (MultiplayerSessionsSubsystem) {
 		MultiplayerSessionsSubsystem->FindSession(10000);
 	}
@@ -114,6 +116,7 @@ void UMenu::OnCreateSession(bool bWasSuccessed)
 		}
 	}
 
+	HostButton->SetIsEnabled(true);
 }
 
 
@@ -136,7 +139,7 @@ void UMenu::OnFindSession(const TArray<FOnlineSessionSearchResult>& SessionResul
 			if (GEngine) {
 				GEngine->AddOnScreenDebugMessage(
 					-1,
-					2.0f,
+					5.0f,
 					FColor::Yellow,
 					FString::Printf(TEXT("OnFindSession: %f"), *SettingVal)
 				);
@@ -144,22 +147,13 @@ void UMenu::OnFindSession(const TArray<FOnlineSessionSearchResult>& SessionResul
 
 			if (SettingVal == MatchType) {
 
-				//debug
-				if (GEngine) {
-					GEngine->AddOnScreenDebugMessage(
-						-1,
-						2.0f,
-						FColor::Yellow,
-						FString::Printf(TEXT("OnFindSession1: %f"), *SettingVal)
-					);
-				}
-
 				MultiplayerSessionsSubsystem->JoinSession(SessionResult);
+				return;
 			}
 
-			return;
 		}
 	}
+	JoinButton->SetIsEnabled(true);
 }
 
 void UMenu::OnJoinSession(FName SessionName, EOnJoinSessionCompleteResult::Type JoinResult)
@@ -170,6 +164,7 @@ void UMenu::OnJoinSession(FName SessionName, EOnJoinSessionCompleteResult::Type 
 		IOnlineSessionPtr SessionInterface = OnlineSubsystem->GetSessionInterface();
 
 		if (!SessionInterface.IsValid()) {
+			JoinButton->SetIsEnabled(true);
 			return;
 		}
 
@@ -196,7 +191,7 @@ void UMenu::OnJoinSession(FName SessionName, EOnJoinSessionCompleteResult::Type 
 			}
 		}
 
-
+		JoinButton->SetIsEnabled(true);
 	}
 }
 
